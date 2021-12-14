@@ -1,18 +1,25 @@
 import { FunctionComponent, useEffect, useState } from "react"
 
 interface ImagePreviewPropsModel {
-    fileMetaData: object
+    fileMetaData: {
+        id: string,
+        url: string,
+        mimeType: string
+    }
 }
 
 let touched = false
 
 const ImagePreview: FunctionComponent<ImagePreviewPropsModel> = (props) => {
-    const [imageUrl, setImageUrl] = useState('')
+    const [imageUrl, setImageUrl] = useState(props.fileMetaData.url || '')
     const [error, setError] = useState<Error | null>(null)
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
-        getFileLink(props.fileMetaData)
+        setImageUrl('')
+        if (!imageUrl && props.fileMetaData.url) {
+            getFileLink(props.fileMetaData)
+        }
     }, [props.fileMetaData])
 
     const getFileLink = async (fileMetaData: object) => {
@@ -34,12 +41,23 @@ const ImagePreview: FunctionComponent<ImagePreviewPropsModel> = (props) => {
         setLoading(false)
     }
 
+    const isDev = false
+    const FILE_FETCHER_SERVER_URL = isDev ? 'http://localhost:5001' : 'https://file-fetcher-from-drive.herokuapp.com'
+
     return (
         <div>
             {
                 (touched && loading) ? <div>Loading Image previews...</div> : (
                     <>
-                        <img src={imageUrl} alt="File Preview" />
+                        <img
+                            style={{ width: '300px' }}
+                            src={
+                                !imageUrl ?
+                                    '' :
+                                    `${FILE_FETCHER_SERVER_URL}?imageUrl=${imageUrl}&mimeType=${props.fileMetaData.mimeType}`
+                            }
+                            alt="File Preview"
+                        />
                         {error && <div>{error.message || 'Something went wrong...'}</div>}
                     </>
                 )
